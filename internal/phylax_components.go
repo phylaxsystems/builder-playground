@@ -16,8 +16,8 @@ func (a *AssertionDA) Run(service *Service, ctx *ExContext) {
 		WithImage(name).
 		WithTag("main").
 		WithArgs("--listen-addr", "0.0.0.0:"+`{{Port "http" 5000}}`, "--private-key", a.Pk).
-		WithVolume("/var/run/docker.sock", "/var/run/docker.sock").
-		WithLabel("privileged", "true")
+		WithAbsoluteVolume("/var/run/docker.sock", "/var/run/docker.sock").
+		WithPrivileged()
 }
 
 func (a *AssertionDA) Name() string {
