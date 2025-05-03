@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	clproxy "github.com/ferranbt/builder-playground/cl-proxy"
+	clproxy "github.com/odyslam/builder-playground/cl-proxy"
 	"github.com/spf13/cobra"
 )
 
