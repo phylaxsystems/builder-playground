@@ -108,12 +108,14 @@ func (o *OpTalosRecipe) Apply(ctx *ExContext, artifacts *Artifacts) *Manifest {
 }
 
 func (o *OpTalosRecipe) Output(manifest *Manifest) map[string]interface{} {
-	opGeth := manifest.MustGetService("op-geth").component.(*OpGeth)
-	if opGeth.Enode != "" {
-		// Only output if enode was set
-		return map[string]interface{}{
-			"op-geth-enode": opGeth.Enode,
+	/*
+		opGeth := manifest.MustGetService("op-geth").component.(*OpGeth)
+		if opGeth.Enode != "" {
+			// Only output if enode was set
+			return map[string]interface{}{
+				"op-geth-enode": opGeth.Enode,
+			}
 		}
-	}
+	*/
 	return map[string]interface{}{}
 }

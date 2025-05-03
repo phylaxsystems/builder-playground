@@ -5,7 +5,7 @@ type AssertionDA struct {
 	pk      string
 }
 
-func (a *AssertionDA) Run(service *service, ctx *ExContext) {
+func (a *AssertionDA) Run(service *Service, ctx *ExContext) {
 	var name string
 	if a.devMode {
 		name = "ghcr.io/phylaxsystems/assertion-da/assertion-da-dev"
@@ -29,7 +29,7 @@ type OpTalos struct {
 	AssertionDA string
 }
 
-func (o *OpTalos) Run(service *service, ctx *ExContext) {
+func (o *OpTalos) Run(service *Service, ctx *ExContext) {
 	service.WithImage("ghcr.io/phylaxsystems/op-talos/op-rbuilder").
 		WithTag("main").
 		WithArgs(
