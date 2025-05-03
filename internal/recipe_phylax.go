@@ -66,14 +66,14 @@ func (o *OpTalosRecipe) Apply(ctx *ExContext, artifacts *Artifacts) *Manifest {
 	externalDaRef := o.externalDA
 	if o.externalDA == "" || o.externalDA == "dev" {
 		svcManager.AddService("assertion-da", &AssertionDA{
-			devMode: o.externalDA == "dev",
-			pk:      "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+			DevMode: o.externalDA == "dev",
+			Pk:      "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
 		})
 		externalDaRef = Connect("assertion-da", "http")
 	}
 
 	externalBuilderRef := o.externalBuilder
-	if o.externalBuilder == "optalos" {
+	if o.externalBuilder == "" {
 		// Add a new op-reth service and connect it to Rollup-boost
 		svcManager.AddService("op-talos", &OpTalos{
 			AssertionDA: externalDaRef,
