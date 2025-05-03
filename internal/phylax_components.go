@@ -8,14 +8,14 @@ type AssertionDA struct {
 func (a *AssertionDA) Run(service *service, ctx *ExContext) {
 	var name string
 	if a.devMode {
-		name = "ghcr.io/phylax-systems/assertion-da/assertion-da-dev"
+		name = "ghcr.io/phylaxsystems/assertion-da/assertion-da-dev"
 	} else {
-		name = "ghcr.io/phylax-systems/assertion-da/assertion-da"
+		name = "ghcr.io/phylaxsystems/assertion-da/assertion-da"
 	}
 	service.
 		WithImage(name).
 		WithTag("main").
-		WithArgs("listen-addr", `{{Addr "http" 0.0.0.0:5000}}`, "--private-key", a.pk)
+		WithArgs("listen-addr", "0.0.0.0"+`{{Port "http" 5000}}`, "--private-key", a.pk)
 }
 
 func (a *AssertionDA) Name() string {
@@ -30,12 +30,22 @@ type OpTalos struct {
 }
 
 func (o *OpTalos) Run(service *service, ctx *ExContext) {
-	service.WithImage("ghcr.io/phylax-systems/op-talos/op-rbuilder").
+	service.WithImage("ghcr.io/phylaxsystems/op-talos/op-rbuilder").
 		WithTag("main").
-		WithEntrypoint("op-rbuilder").
 		WithArgs(
+			"node",
+			"--authrpc.port", `{{Port "authrpc" 8551}}`,
+			"--authrpc.addr", "0.0.0.0",
+			"--authrpc.jwtsecret", "{{.Dir}}/jwtsecret",
+			"--http",
 			"--http.addr", "0.0.0.0",
 			"--http.port", `{{Port "http" 8545}}`,
+			"--chain", "{{.Dir}}/l2-genesis.json",
+			"--datadir", "{{.Dir}}/data_op_reth",
+			"--disable-discovery",
+			"--color", "never",
+			"--metrics", `0.0.0.0:{{Port "metrics" 9090}}`,
+			"--port", `{{Port "rpc" 30303}}`,
 			"--ae.rpc_da_url", Connect(o.AssertionDA, "http"),
 		)
 }
