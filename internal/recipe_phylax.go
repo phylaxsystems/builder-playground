@@ -62,7 +62,9 @@ func (o *OpTalosRecipe) Apply(ctx *ExContext, artifacts *Artifacts) *Manifest {
 	externalBuilderRef := o.externalBuilder
 	if o.externalBuilder == "op-talos" {
 		// Add a new op-reth service and connect it to Rollup-boost
-		svcManager.AddService("op-talos", &Optalos{})
+		svcManager.AddService("op-talos", &OpTalos{
+			AssertionDA: "assertion-da",
+		})
 		externalBuilderRef = Connect("op-talos", "authrpc")
 	}
 
