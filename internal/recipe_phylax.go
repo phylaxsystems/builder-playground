@@ -81,15 +81,13 @@ func (o *OpTalosRecipe) Apply(ctx *ExContext, artifacts *Artifacts) *Manifest {
 		externalBuilderRef = Connect("op-talos", "authrpc")
 	}
 
-	elNode := "op-geth"
-	if o.externalBuilder != "" {
-		elNode = "rollup-boost"
+	elNode := "rollup-boost"
 
-		svcManager.AddService("rollup-boost", &RollupBoost{
-			ELNode:  "op-geth",
-			Builder: externalBuilderRef,
-		})
-	}
+	svcManager.AddService("rollup-boost", &RollupBoost{
+		ELNode:  "op-geth",
+		Builder: externalBuilderRef,
+	})
+
 	svcManager.AddService("op-node", &OpNode{
 		L1Node:   "el",
 		L1Beacon: "beacon",
