@@ -27,6 +27,7 @@ var logLevelFlag string
 var bindExternal bool
 var withPrometheus bool
 var networkName string
+var grafanaAlloyConfigFlag string
 
 var rootCmd = &cobra.Command{
 	Use:   "playground",
@@ -174,6 +175,7 @@ func main() {
 		recipeCmd.Flags().BoolVar(&bindExternal, "bind-external", false, "bind host ports to external interface")
 		recipeCmd.Flags().BoolVar(&withPrometheus, "with-prometheus", false, "whether to gather the Prometheus metrics")
 		recipeCmd.Flags().StringVar(&networkName, "network", "", "network name")
+		recipeCmd.Flags().StringVar(&grafanaAlloyConfigFlag, "grafana-alloy-config", "", "Path to Grafana Alloy configuration file")
 
 		cookCmd.AddCommand(recipeCmd)
 	}
@@ -238,6 +240,17 @@ func runIt(recipe internal.Recipe) error {
 	if withPrometheus {
 		if err := internal.CreatePrometheusServices(svcManager, artifacts.Out); err != nil {
 			return fmt.Errorf("failed to create prometheus services: %w", err)
+		}
+	}
+
+	if grafanaAlloyConfigFlag != "" {
+		// Check if file exists
+		if _, err := os.Stat(grafanaAlloyConfigFlag); os.IsNotExist(err) {
+			return fmt.Errorf("grafana alloy config file not found: %s", grafanaAlloyConfigFlag)
+		}
+		// Call a new function to add the Grafana Alloy service
+		if err := internal.CreateGrafanaAlloyService(svcManager, artifacts.Out, grafanaAlloyConfigFlag); err != nil {
+			return fmt.Errorf("failed to create grafana alloy service: %w", err)
 		}
 	}
 
