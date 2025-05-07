@@ -23,6 +23,7 @@ func init() {
 	register(&nullService{})
 	register(&OpTalos{})
 	register(&AssertionDA{})
+	register(&GrafanaAlloyMetaComponent{})
 	register(&Faucet{})
 }
 
