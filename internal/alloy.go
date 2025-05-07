@@ -9,6 +9,7 @@ const (
 	alloyImage         = "grafana/alloy:latest" // You might want to pin this to a specific version
 	alloyContainerName = "grafana-alloy"
 	alloyConfigPath    = "/etc/alloy/config.alloy"
+	AlloyComponentName = "grafana-alloy-component" // Component name for registration and lookup
 )
 
 // CreateGrafanaAlloyService adds a Grafana Alloy service to the service manager.
@@ -20,7 +21,8 @@ func CreateGrafanaAlloyService(svcManager *Manifest, outDir *output, userConfigF
 	}
 
 	alloySvc := svcManager.NewService(alloyContainerName)
-	alloySvc.WithImage(alloyImage) // Set the image for the service
+	alloySvc.ComponentName = AlloyComponentName // Set the component name
+	alloySvc.WithImage(alloyImage)              // Set the image for the service
 	alloySvc.WithArgs("run", alloyConfigPath)
 	alloySvc.WithAbsoluteVolume(alloyConfigPath, absUserConfigFile) // Mount the absolute config path
 	// alloySvc.AddPort(&Port{Name: "alloy-http", Port: 12345, HostPort: 12345, Protocol: ProtocolTCP}) // Example port, adjust as needed
@@ -36,3 +38,15 @@ func CreateGrafanaAlloyService(svcManager *Manifest, outDir *output, userConfigF
 
 	return nil
 }
+
+// GrafanaAlloyMetaComponent is a minimal ServiceGen for catalog registration.
+// The actual service configuration happens in CreateGrafanaAlloyService.
+// This component primarily exists to satisfy the runner's need to find a component by name.
+type GrafanaAlloyMetaComponent struct{}
+
+// Name returns the component's registered name.
+func (c *GrafanaAlloyMetaComponent) Name() string { return AlloyComponentName }
+
+// Run is part of the ServiceGen interface. For this meta-component,
+// it's empty as the service is configured directly in CreateGrafanaAlloyService.
+func (c *GrafanaAlloyMetaComponent) Run(service *Service, ctx *ExContext) {}

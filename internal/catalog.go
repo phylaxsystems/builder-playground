@@ -22,6 +22,7 @@ func init() {
 	register(&BuilderHubMockProxy{})
 	register(&OpTalos{})
 	register(&AssertionDA{})
+	register(&GrafanaAlloyMetaComponent{})
 }
 
 func FindComponent(name string) ServiceGen {

@@ -166,6 +166,20 @@ While the current recipes (L1 and OpStack) are relatively simple, this architect
 
 The separation between components and recipes makes it easy to create new environments by reusing and combining existing components in different ways. The Manifest provides an abstraction between the recipe's description of what should be deployed and how it actually gets deployed (Docker Compose, Kubernetes, etc.).
 
+## Telemetry with Grafana Alloy
+
+The playground supports integrating [Grafana Alloy](https://grafana.com/docs/alloy/latest/) for collecting telemetry data, such as traces from services.
+
+To enable Grafana Alloy:
+
+1.  **Provide a Configuration File**: Use the `--grafana-alloy-config` flag when running a `cook` command, followed by the path to your Alloy configuration file.
+    ```bash
+    builder-playground cook <your-recipe> --grafana-alloy-config /path/to/your/alloy-config.alloy
+    ```
+2.  **Alloy Service**: If a valid configuration path is provided, a `grafana-alloy` Docker container will be started as part of your environment. It will use the provided configuration file, which is mounted into the container at `/etc/alloy/config.alloy`.
+3.  **OTLP Endpoint**: Services like `op-talos` are pre-configured to send OTLP/HTTP traces to `http://grafana-alloy:4318`.
+4.  **Alloy Configuration**: Ensure your Grafana Alloy configuration file is set up to receive OTLP traces. Typically, this involves setting up an `otelcol.receiver.otlp` component listening on `0.0.0.0:4318` for HTTP, or `0.0.0.0:4317` for gRPC. If you use gRPC or a different port, you would need to adjust the `OTEL_EXPORTER_OTLP_ENDPOINT` environment variable in the relevant service components (e.g., `OpTalos` in `internal/components_phylax.go`).
+
 ## Design Philosophy
 
 The Builder Playground is focused exclusively on block building testing and development. Unlike general-purpose tools like Kurtosis that support any Ethereum setup, we take an opinionated approach optimized for block building workflows.
