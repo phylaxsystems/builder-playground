@@ -711,6 +711,8 @@ func (d *LocalRunner) toDockerComposeService(s *Service) (map[string]interface{}
 				protocol = "/udp"
 			}
 
+			// CADDY Modification
+			// TODO(Odysseas): This feels like a hack here
 			// Only expose ports if Caddy is not enabled or this is the Caddy service itself
 			shouldExpose := !d.manifest.ctx.CaddyEnabled || s.Name == "caddy"
 
@@ -752,6 +754,10 @@ func (d *LocalRunner) generateDockerCompose() ([]byte, error) {
 	// both to have access to the services from localhost but also to do communication
 	// between services running inside docker and the ones running on the host machine.
 	for _, svc := range d.manifest.services {
+		// CADDY Modification
+		// TODO(Odysseas): This feels like a hack here
+		// If caddy is enabled, then reserve ports only for caddy
+		// else, reserve for all services
 		if d.manifest.ctx.CaddyEnabled {
 			if svc.Name == "caddy" {
 				// caddy is a special case. We need to reserve the ports for http, https and admin
@@ -759,11 +765,10 @@ func (d *LocalRunner) generateDockerCompose() ([]byte, error) {
 				for _, port := range svc.Ports {
 					port.HostPort = d.reservePort(port.Port, port.Protocol)
 				}
-				continue
-			} else {
-				for _, port := range svc.Ports {
-					port.HostPort = d.reservePort(port.Port, port.Protocol)
-				}
+			}
+		} else {
+			for _, port := range svc.Ports {
+				port.HostPort = d.reservePort(port.Port, port.Protocol)
 			}
 		}
 	}
