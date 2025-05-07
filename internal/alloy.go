@@ -83,31 +83,7 @@ prometheus.remote_write "metrics_service" {
 	}
 }
 
-// Logs
-loki.write "grafana_cloud_loki" {
-	endpoint {
-		url = sys.env("GRAFANA_LOGS_URL")
 
-		basic_auth {
-			username = sys.env("GRAFANA_LOGS_USERNAME")
-			password = sys.env("GRAFANA_LOGS_PASSWORD")
-		}
-	}
-}
-
-// Traces
-otelcol.receiver.otlp "otlp_receiver" {
-  grpc {
-    endpoint = "0.0.0.0:4317"
-  }
-  http {
-    endpoint = "0.0.0.0:4318"
-  }
-
-  output {
-    traces = [otelcol.exporter.otlp.grafanacloud.input]
-  }
-}
 
 // Scrape metrics from services
 prometheus.scrape "default" {
@@ -147,6 +123,32 @@ prometheus.scrape "default" {
   scrape_timeout = "1s"  // should be lower than scrape_interval
 }
 
+// Traces
+otelcol.receiver.otlp "otlp_receiver" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+
+  output {
+    traces = [otelcol.processor.resourcedetection.container_detector.input]
+  }
+}
+
+// Resource detection processor according to Grafana docs
+otelcol.processor.resourcedetection "container_detector" {
+  // Use environment variables and docker metadata for detection
+  detectors = ["env", "docker" ]
+  // Set appropriate timeout
+  timeout = "5s"
+
+  output {
+    traces = [otelcol.exporter.otlp.grafanacloud.input]
+  }
+}
+
 // Export traces
 otelcol.exporter.otlp "grafanacloud" {
   client {
@@ -160,18 +162,31 @@ otelcol.auth.basic "grafanacloud" {
   password = sys.env("GRAFANA_TRACES_PASSWORD")
 }
 
+
 // Collect logs from Docker containers
 discovery.docker "linux" {
   host = "unix:///var/run/docker.sock"
 }
 
+
 loki.source.docker "container_logs" {
   host = "unix:///var/run/docker.sock"
-  
   targets = discovery.docker.linux.targets 
-    
   forward_to = [loki.write.grafana_cloud_loki.receiver]
 }
+
+// Logs
+loki.write "grafana_cloud_loki" {
+	endpoint {
+		url = sys.env("GRAFANA_LOGS_URL")
+
+		basic_auth {
+			username = sys.env("GRAFANA_LOGS_USERNAME")
+			password = sys.env("GRAFANA_LOGS_PASSWORD")
+		}
+	}
+}
+
 `
 
 	// Write the alloy configuration file
