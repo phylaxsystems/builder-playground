@@ -1,3 +1,9 @@
+package internal
+
+import (
+	"fmt"
+)
+
 func CreateCaddyServices(manifest *Manifest, out *output) error {
 	// Create a Caddyfile configuration for reverse proxying all services with HTTP or WS ports
 	var routes []string

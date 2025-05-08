@@ -238,6 +238,12 @@ func runIt(recipe internal.Recipe) error {
 		}
 	}
 
+	if caddyEnabled {
+		if err := internal.CreateCaddyServices(svcManager, artifacts.Out); err != nil {
+			return fmt.Errorf("failed to create caddy services: %w", err)
+		}
+	}
+
 	if err := svcManager.Validate(); err != nil {
 		return fmt.Errorf("failed to validate manifest: %w", err)
 	}
@@ -256,17 +262,6 @@ func runIt(recipe internal.Recipe) error {
 	// save the manifest.json file
 	if err := svcManager.SaveJson(); err != nil {
 		return fmt.Errorf("failed to save manifest: %w", err)
-	}
-
-	if withPrometheus {
-		if err := internal.CreatePrometheusServices(svcManager, artifacts.Out); err != nil {
-			return fmt.Errorf("failed to create prometheus services: %w", err)
-		}
-	}
-	if caddyEnabled {
-		if err := internal.CreateCaddyServices(svcManager, artifacts.Out); err != nil {
-			return fmt.Errorf("failed to create caddy services: %w", err)
-		}
 	}
 
 	if dryRun {
