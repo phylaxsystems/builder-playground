@@ -225,6 +225,7 @@ loki.write "grafanacloud" {
 		WithPort("otlp-grpc", 4317, "tcp").
 		// OTLP HTTP port
 		WithPort("otlp-http", 4318, "tcp").
+		WithPort("http", 12345, "tcp").
 		// Mount the alloy config file
 		WithArtifact("/etc/alloy/alloy.river", "alloy.river").
 		// Mount Docker socket for container discovery
