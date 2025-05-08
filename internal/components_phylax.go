@@ -25,6 +25,8 @@ func (a *AssertionDA) Run(service *Service, ctx *ExContext) {
 		WithPrivileged().
 		WithEnv("OTEL_EXPORTER_OTLP_ENDPOINT", Connect("grafana-alloy", "otlp-http")).
 		WithEnv("OTEL_ENVIRONMENT_NAME", "PCL_DA")
+		WithEnv("OTEL_SERVICE_NAME", "ASSERTION_DA")
+
 }
 
 func (a *AssertionDA) Name() string {
@@ -98,6 +100,7 @@ func (o *OpTalos) Run(service *Service, ctx *ExContext) {
 		WithEnv("RUST_LOG", logLevelToTalosVerbosity(ctx.LogLevel)).
 		WithEnv("OTEL_EXPORTER_OTLP_ENDPOINT", Connect("grafana-alloy", "otlp-http")).
 		WithEnv("OTEL_ENVIRONMENT_NAME", "PCL_TALOS")
+		WithEnv("OTEL_SERVICE_NAME", "OP_TALOS")
 }
 
 func (o *OpTalos) Name() string {
