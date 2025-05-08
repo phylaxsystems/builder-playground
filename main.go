@@ -30,7 +30,6 @@ var networkName string
 var labels internal.MapStringFlag
 var withGrafanaAlloy bool
 var withCaddy []string
-var withCaddyFlag internal.StringListFlag
 
 var rootCmd = &cobra.Command{
 	Use:   "playground",
@@ -155,8 +154,6 @@ var recipes = []internal.Recipe{
 }
 
 func main() {
-	withCaddyFlag = internal.StringListFlag{Values: &withCaddy}
-
 	for _, recipe := range recipes {
 		recipeCmd := &cobra.Command{
 			Use:   recipe.Name(),
