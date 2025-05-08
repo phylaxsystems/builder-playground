@@ -26,10 +26,11 @@ var timeout time.Duration
 var logLevelFlag string
 var bindExternal bool
 var withPrometheus bool
-var caddyEnabled bool
 var networkName string
 var labels internal.MapStringFlag
 var withGrafanaAlloy bool
+var withCaddy []string
+var withCaddyFlag internal.StringListFlag
 
 var rootCmd = &cobra.Command{
 	Use:   "playground",
@@ -154,6 +155,8 @@ var recipes = []internal.Recipe{
 }
 
 func main() {
+	withCaddyFlag = internal.StringListFlag{Values: &withCaddy}
+
 	for _, recipe := range recipes {
 		recipeCmd := &cobra.Command{
 			Use:   recipe.Name(),
@@ -177,7 +180,7 @@ func main() {
 		recipeCmd.Flags().BoolVar(&bindExternal, "bind-external", false, "bind host ports to external interface")
 		recipeCmd.Flags().BoolVar(&withPrometheus, "with-prometheus", false, "whether to gather the Prometheus metrics")
 		recipeCmd.Flags().BoolVar(&withGrafanaAlloy, "with-grafana-alloy", false, "whether to spawn a grafana alloy to agent for metrics, logs, traces")
-		recipeCmd.Flags().BoolVar(&caddyEnabled, "caddy-enabled", false, "enable caddy")
+		recipeCmd.Flags().StringArrayVar(&withCaddy, "with-caddy", []string{}, "Enable caddy and expose the services with the given names")
 		recipeCmd.Flags().StringVar(&networkName, "network", "", "network name")
 		recipeCmd.Flags().Var(&labels, "labels", "list of labels to apply to the resources")
 		cookCmd.AddCommand(recipeCmd)
@@ -238,8 +241,9 @@ func runIt(recipe internal.Recipe) error {
 		}
 	}
 
-	if caddyEnabled {
-		if err := internal.CreateCaddyServices(svcManager, artifacts.Out); err != nil {
+	if len(withCaddy) > 0 {
+		log.Printf("Spawning a caddy reverse proxy for the services: %v\n", withCaddy)
+		if err := internal.CreateCaddyServices(withCaddy, svcManager, artifacts.Out); err != nil {
 			return fmt.Errorf("failed to create caddy services: %w", err)
 		}
 	}
