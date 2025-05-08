@@ -218,14 +218,18 @@ loki.write "grafanacloud" {
 	srv := manifest.NewService("grafana-alloy").
 		WithImage("grafana/alloy").
 		WithTag("latest").
-		WithArgs("run", "/etc/alloy/alloy.river").
+		WithArgs(
+			"run",
+			"/etc/alloy/alloy.river",
+			"--server.http.listen-addr",
+			`0.0.0.0:{{Port "http" 12345}}`,
+		).
 		// Metrics port
 		WithPort("metrics", 4000, "tcp").
 		// OTLP gRPC port
 		WithPort("otlp-grpc", 4317, "tcp").
 		// OTLP HTTP port
 		WithPort("otlp-http", 4318, "tcp").
-		WithPort("http", 12345, "tcp").
 		// Mount the alloy config file
 		WithArtifact("/etc/alloy/alloy.river", "alloy.river").
 		// Mount Docker socket for container discovery
