@@ -314,6 +314,20 @@ func runIt(recipe internal.Recipe) error {
 			}
 			fmt.Printf("- %s (%s)\n", ss.Name, strings.Join(portsStr, ", "))
 		}
+		if len(withCaddy) > 0 {
+			fmt.Printf("\n========= Caddy Exposed Services =========\n")
+			for _, serviceName := range withCaddy {
+				service, ok := svcManager.GetService(serviceName)
+				if ok {
+					for _, port := range service.GetPorts() {
+						if port.Name == "http" || port.Name == "ws" {
+							fmt.Printf("- %s (%s): http://localhost:8888/%s/%s\n",
+								service.Name, port.Name, service.Name, port.Name)
+						}
+					}
+				}
+			}
+		}
 	}
 
 	if err := dockerRunner.WaitForReady(ctx, 20*time.Second); err != nil {

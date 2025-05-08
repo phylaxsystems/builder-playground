@@ -10,8 +10,6 @@ func CreateCaddyServices(exposedServices []string, manifest *Manifest, out *outp
 	var routes []string
 	manifest.ctx.CaddyEnabled = true
 
-	bodyContent := "Available services:\\n"
-
 	// Add a routes for each service with http or ws ports
 	for _, service := range manifest.services {
 		if slices.Contains(exposedServices, service.Name) {
@@ -24,8 +22,6 @@ func CreateCaddyServices(exposedServices []string, manifest *Manifest, out *outp
 					route += fmt.Sprintf("    uri strip_prefix /%s/%s\n", service.Name, port.Name)
 					route += fmt.Sprintf("    reverse_proxy %s:%d\n", service.Name, port.Port)
 					route += "  }\n\n"
-					// Add the service to the body content of the index page
-					bodyContent += fmt.Sprintf("%s (%s): /%s/%s\\n", service.Name, port.Name, service.Name, port.Name)
 					routes = append(routes, route)
 				}
 			}
@@ -39,13 +35,6 @@ func CreateCaddyServices(exposedServices []string, manifest *Manifest, out *outp
 
 	// Create the Caddyfile
 	caddyfile := ":8888 {\n"
-	caddyfile += "  # Automatically generated routes for HTTP and WebSocket services\n\n"
-
-	// Add a root route that lists available services
-	caddyfile += "  # Root route showing available services\n"
-	caddyfile += "  respond / 200 {\n"
-	caddyfile += fmt.Sprintf("    body %q\n", bodyContent)
-	caddyfile += "  }\n\n"
 
 	// Add all the routes
 	for _, route := range routes {
