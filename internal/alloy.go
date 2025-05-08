@@ -24,19 +24,13 @@ func CreateGrafanaAlloyServices(manifest *Manifest, out *output) error {
 
 	// Check for required environment variables
 	requiredEnvVars := []string{
-		"GRAFANA_REMOTE_URL",
-		"GRAFANA_INSTANCE_ID",
-		"GRAFANA_REMOTE_USERNAME",
-		"GRAFANA_REMOTE_PASSWORD",
 		"GRAFANA_METRICS_URL",
 		"GRAFANA_METRICS_USERNAME",
-		"GRAFANA_METRICS_PASSWORD",
 		"GRAFANA_LOGS_URL",
 		"GRAFANA_LOGS_USERNAME",
-		"GRAFANA_LOGS_PASSWORD",
 		"GRAFANA_TRACES_URL",
 		"GRAFANA_TRACES_USERNAME",
-		"GRAFANA_TRACES_PASSWORD",
+		"GRAFANA_CLOUD_API_KEY",
 	}
 
 	// Check if all required environment variables are set
@@ -60,6 +54,7 @@ func CreateGrafanaAlloyServices(manifest *Manifest, out *output) error {
 	// Create the Grafana Alloy configuration
 	alloyConfig := `
 // Metrics
+
 prometheus.remote_write "metrics_service" {
 	endpoint {
 		url = sys.env("GRAFANA_METRICS_URL")
@@ -71,13 +66,22 @@ prometheus.remote_write "metrics_service" {
 	}
 }
 
+prometheus.exporter.cadvisor "containers" {
+  docker_host = "unix:///var/run/docker.sock"
+  storage_duration = "5m"
+}
+
+prometheus.scrape "containers" {
+  targets    = prometheus.exporter.cadvisor.containers.targets
+  forward_to = [prometheus.remote_write.metrics_service.receiver]
+  scrape_interval = "10s"
+}
 
 
 // Scrape metrics from services
-prometheus.scrape "default" {
+prometheus.scrape "playground" {
   targets = [
 `
-
 	// Add a scrape target for each service that exposes metrics
 	scrapeTargets := []string{}
 	for _, service := range manifest.services {
@@ -109,6 +113,16 @@ prometheus.scrape "default" {
   forward_to = [prometheus.remote_write.metrics_service.receiver]
   scrape_interval = "10s"  // cannot be lower than poll_frequency
   scrape_timeout = "1s"  // should be lower than scrape_interval
+}
+
+// Add a scrape job for Grafana Alloy's own metrics
+prometheus.scrape "alloy_self" {
+  targets = [
+    {__address__ = "localhost:4000", __metrics_path__ = "/metrics"},
+  ]
+  forward_to = [prometheus.remote_write.metrics_service.receiver]
+  scrape_interval = "10s"
+  scrape_timeout = "1s"
 }
 
 // Traces
@@ -157,14 +171,32 @@ discovery.docker "linux" {
 }
 
 
-loki.source.docker "container_logs" {
-  host = "unix:///var/run/docker.sock"
-  targets = discovery.docker.linux.targets 
-  forward_to = [loki.write.grafana_cloud_loki.receiver]
+discovery.relabel "logs_integrations_docker" {
+  targets = []
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex = "/(.*)"
+    target_label = "service_name"
+  }
+  rule {
+	target_label = "instance"
+	replacement = constants.hostname
+  }
+}
+
+
+loki.source.docker "default" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.docker.linux.targets
+  labels     = {"platform" = "docker"}
+  relabel_rules = discovery.relabel.logs_integrations_docker.rules
+  forward_to = [loki.write.grafanacloud.receiver]
+  refresh_interval = "5s"
 }
 
 // Logs
-loki.write "grafana_cloud_loki" {
+loki.write "grafanacloud" {
 	endpoint {
 		url = sys.env("GRAFANA_LOGS_URL")
 
@@ -196,7 +228,16 @@ loki.write "grafana_cloud_loki" {
 		// Mount the alloy config file
 		WithArtifact("/etc/alloy/alloy.river", "alloy.river").
 		// Mount Docker socket for container discovery
-		WithAbsoluteVolume("/var/run/docker.sock", "/var/run/docker.sock")
+		// and other cadvisor metrics
+		// TODO: Add a new method to add 'ro' volumes.
+		// Instead of adding all of them as 'rw'
+		WithAbsoluteVolume("/rootfs", "/").
+		WithAbsoluteVolume("/var/run", "/var/run").
+		WithAbsoluteVolume("/var/run/docker.sock", "/var/run/docker.sock").
+		WithAbsoluteVolume("/sys", "/sys").
+		WithAbsoluteVolume("/var/lib/docker", "/var/lib/docker").
+		WithAbsoluteVolume("/dev/disk", "/dev/disk").
+		WithPrivileged()
 
 	// Add environment variables with values from environment
 	for _, envVar := range requiredEnvVars {
