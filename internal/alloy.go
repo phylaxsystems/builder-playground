@@ -59,18 +59,6 @@ func CreateGrafanaAlloyServices(manifest *Manifest, out *output) error {
 
 	// Create the Grafana Alloy configuration
 	alloyConfig := `
-// Remote configuration
-remotecfg {
-	url            = sys.env("GRAFANA_REMOTE_URL")
-	id             = sys.env("GRAFANA_INSTANCE_ID")
-	poll_frequency = "10s"
-
-	basic_auth {
-		username = sys.env("GRAFANA_REMOTE_USERNAME")
-		password = sys.env("GRAFANA_REMOTE_PASSWORD")
-	}
-}
-
 // Metrics
 prometheus.remote_write "metrics_service" {
 	endpoint {
@@ -78,7 +66,7 @@ prometheus.remote_write "metrics_service" {
 
 		basic_auth {
 			username = sys.env("GRAFANA_METRICS_USERNAME")
-			password = sys.env("GRAFANA_METRICS_PASSWORD")
+			password = sys.env("GRAFANA_CLOUD_API_KEY")
 		}
 	}
 }
@@ -159,7 +147,7 @@ otelcol.exporter.otlp "grafanacloud" {
 
 otelcol.auth.basic "grafanacloud" {
   username = sys.env("GRAFANA_TRACES_USERNAME")
-  password = sys.env("GRAFANA_TRACES_PASSWORD")
+  password = sys.env("GRAFANA_CLOUD_API_KEY")
 }
 
 
@@ -182,7 +170,7 @@ loki.write "grafana_cloud_loki" {
 
 		basic_auth {
 			username = sys.env("GRAFANA_LOGS_USERNAME")
-			password = sys.env("GRAFANA_LOGS_PASSWORD")
+			password = sys.env("GRAFANA_CLOUD_API_KEY")
 		}
 	}
 }
