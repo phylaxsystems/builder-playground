@@ -46,13 +46,13 @@ func (r *RollupBoost) Run(service *Service, ctx *ExContext) {
 			"--builder-url", r.Builder,
 			"--log-level", logLevelToRustLogEnv(ctx.LogLevel),
 		).WithArtifact("/data/jwtsecret", "jwtsecret")
-	// if ctx.AlloyEnabled {
-	// 	service.
-	// 		WithArgs(
-	// 			"--tracing",
-	// 			"--otlp-endpoint", Connect("grafana-alloy", "otlp-http"),
-	// 		)
-	// }
+	if ctx.AlloyEnabled {
+		service.
+			WithArgs(
+				"--tracing",
+				"--otlp-endpoint", Connect("grafana-alloy", "otlp-http"),
+			)
+	}
 }
 
 func (r *RollupBoost) Name() string {
