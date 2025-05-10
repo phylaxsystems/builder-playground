@@ -226,7 +226,7 @@ func runIt(recipe internal.Recipe) error {
 		return err
 	}
 
-	svcManager := recipe.Apply(&internal.ExContext{LogLevel: logLevel}, artifacts)
+	svcManager := recipe.Apply(&internal.ExContext{LogLevel: logLevel, AlloyEnabled: withGrafanaAlloy, CaddyEnabled: len(withCaddy) > 0}, artifacts)
 
 	if withPrometheus {
 		if err := internal.CreatePrometheusServices(svcManager, artifacts.Out); err != nil {
